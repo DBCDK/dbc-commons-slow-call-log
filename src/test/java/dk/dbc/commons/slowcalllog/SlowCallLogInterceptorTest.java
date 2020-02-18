@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  *
  * @author Morten Bøgeskov (mb@dbc.dk)
  */
-public class SlowCallLoggerTest {
+public class SlowCallLogInterceptorTest {
 
     @Test
     public void testDurationParsing() throws Exception {

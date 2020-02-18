@@ -78,10 +78,6 @@ public @interface SlowCallLog {
 
     /**
      * The level (org.slf4j.event.Level) for the logging.
-     * <p>
-     * if the class declaring the annotated method has a @{code public static
-     * final} logger, that is used with no package name in the log. Otherwise
-     * the logger from {@link SlowCallLogger} is used with full package name.
      *
      * @return TRACE/DEBUG/INFO/WARN/WARNING/ERROR
      */
