@@ -49,7 +49,7 @@ public class SlowCallLogInterceptorTest {
     }
 
     @Test
-    public void testBuildExceptionString() throws Exception {
+    public void testMakeExceptionString() throws Exception {
         System.out.println("testBuildExceptionString");
         assertTimeout(
                 Duration.ofMillis(2000),

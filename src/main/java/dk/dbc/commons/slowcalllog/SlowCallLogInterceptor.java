@@ -143,17 +143,18 @@ public class SlowCallLogInterceptor {
      */
     static String makeExceptionString(Throwable tr) {
         StringBuilder cause = new StringBuilder();
-        while (tr != null) {
+        for (;;) {
+            cause.append(tr.getClass().getName());
             String message = tr.getMessage();
             if (message != null) {
-                return cause.append(tr.getClass().getName())
-                        .append(": ")
-                        .append(message)
-                        .toString();
+                cause.append(": ")
+                        .append(message);
+                break;
             }
-            cause.append(tr.getClass().getName())
-                    .append(" > ");
             tr = tr.getCause();
+            if (tr == null)
+                break;
+            cause.append(" > ");
         }
         return cause.toString();
     }
@@ -242,6 +243,7 @@ public class SlowCallLogInterceptor {
             return amount * NanoUnit.of(parts[1].trim()).nanoSeconds();
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException("Don't know duration: " + duration);
+
         }
     }
 
