@@ -69,7 +69,7 @@ public @interface SlowCallLog {
      * method with 'scale = 1.0', if it has 3 sub calls you can annotate them
      * with scale proportional to the time they should take under normal
      * circumstances. Then you'll get logging for each of the methods that takes
-     * a disproportional amount of time.
+     * a disproportionate amount of time.
      *
      * @return 1.0
      */

@@ -53,6 +53,7 @@ public class SlowCallLogInterceptor {
     private static final Logger log = LoggerFactory.getLogger(SlowCallLogInterceptor.class);
 
     private static final HashMap<Method, Invoker> WRAPPERS = new HashMap<>();
+    // Do noting "wrapper"
     private static final Invoker DEFAULT_WRAPPER = InvocationContext::proceed;
     private static final String MDC_DURATION = "call_duration_ms";
 
@@ -179,7 +180,7 @@ public class SlowCallLogInterceptor {
 
     /**
      * If en exception doesn't have a message find the one that does, and give a
-     * meaning full message
+     * meaningful message
      * <p>
      * Includes names of exception classes that didn't have messages
      *
@@ -320,7 +321,6 @@ public class SlowCallLogInterceptor {
             return amount * NanoUnit.of(parts[1].trim()).nanoSeconds();
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException("Don't know duration: " + duration);
-
         }
     }
 }

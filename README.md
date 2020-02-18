@@ -10,7 +10,7 @@ Instead we opt to log when a call has been completed, and determined slow.
 
 __WARNING__: We log the arguments as they are when the call is completed. If arguments are altered by the method, they will not be seen as the input edition of them. This might hide the culprit for the call duration.
 
-It is all based around an annotation `@SlowCallLog`, and `CDI` in `EE`. During bean discovery in the container, all `@SlowCallLog` annotations are picked up. An interceptor is configured with a wrapper for the given methods, that calls the method, and if the calls duration is above a threshold, the call in logged with it's parameters and optionally `return value` or `exception` if the call fails.
+It is all based around an annotation `@SlowCallLog`, and `CDI` in `EE`. During bean discovery in the container, all `@SlowCallLog` annotations are picked up. An interceptor is configured with a wrapper for the given methods, that calls the method, and if the calls duration is above a threshold, the call in logged with its parameters and optionally `return value` or `exception` if the call fails.
 
 ## Example
 
@@ -52,8 +52,8 @@ Called from:
 
 ```
 
-The calls are across bean-boundries, so interceptors are in play. The environment variable `BACKEND_TIMING` is set to some duration (ex. `20ms`), it is expected that `getDatabaseEntriesFor()` takes under normal circumstances 60% of the wall clock time, and `processEntries()` about 40%.
+The calls are across bean-boundaries, so interceptors are in play. The environment variable `BACKEND_TIMING` is set to some duration (ex. `20ms`), it is expected that `getDatabaseEntriesFor()` takes under normal circumstances 60% of the wall clock time, and `processEntries()` about 40%.
 This will log all the arguments and exceptions but not return values for the calls to `getDatabaseEntriesFor()`, that take more than 12ms, as an error.
 And for `processEntries()` calls that take more that 8ms it will log trackingId and return value.
 
-This is bould upon the `slf4j` log framework. And the logger used is called `SlowCallLog`. An mdc value called: `call_duration_ms` records duration in milliseconds.
+This is built upon the `slf4j` log framework. And the logger used is called `SlowCallLog`. An mdc value called: `call_duration_ms` records duration in milliseconds.

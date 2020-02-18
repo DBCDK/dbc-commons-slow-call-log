@@ -7,7 +7,7 @@ An example that uses `dbc-commons-slow-call-log`
 
 Remember to build library first (and install it) by running: `(cd .. && mvn install)`
 
-The you can build the JakartaEE application by ruinning: `mvn package` - this also downloads a `payara-micro.jar`
+The you can build the JakartaEE application by running: `mvn package` - this also downloads a `payara-micro.jar`
 
 ## Running
 You can deploy it by running:
@@ -33,7 +33,7 @@ The output should be of this sort (this is pretty printed using `jq`):
 {
   "timestamp": "...",
   "version": "1",
-  "message": "dk.dbc.example.Ping.ping([25])  = [Status{ok=true, message=pong!}] (25766µs)",
+  "message": "dk.dbc.example.Ping.ping([25]) = [Status{ok=true, message=pong!}] (25766µs)",
   "logger": "dk.dbc.commons.slowcalllog.SlowCallLog",
   "thread": "http-thread-pool::http-listener(2)",
   "level": "ERROR",
