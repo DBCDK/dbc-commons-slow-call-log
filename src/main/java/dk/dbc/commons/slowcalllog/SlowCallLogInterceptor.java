@@ -19,12 +19,12 @@
 package dk.dbc.commons.slowcalllog;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 import javax.annotation.Priority;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
@@ -74,24 +74,60 @@ public class SlowCallLogInterceptor {
                 .call(context);
     }
 
+    /**
+     * Store in the global wrappers object a wrapper for this method
+     *
+     * @param method The method that is annotated with {@link SlowCallLog}
+     * @return an error message or null
+     */
     static String wrapMethod(Method method) {
+        String methodName = method.toGenericString();
         try {
             SlowCallLog slowCallLog = method.getAnnotation(SlowCallLog.class);
             if (slowCallLog == null)
                 return null;
+            log.debug("wrapping {} {}", slowCallLog, methodName);
             int[] params = paramList(slowCallLog, method);
+            IntStream.of(params)
+                    .mapToObj(i -> method.getParameterTypes()[i])
+                    .filter(SlowCallLogInterceptor::cannotBecomeString)
+                    .forEach(type -> log.warn("Type {} doesn't have a toString(), but is used in @SlowCallLog by {}", type, methodName));
             long maxInvocationDurationInNs = logDuration(slowCallLog);
-            BiConsumer<String, Object[]> logger = loggerForLevel(slowCallLog);
+            BiConsumer<String, Object[]> logger = loggerForLevel(slowCallLog.level());
             NanoUnit logUnit = NanoUnit.of(slowCallLog.unit());
             LogPrinter exceptionLogger = loggerFor(method, params, true, logUnit, logger);
-            LogPrinter slowLogger = slowCallLog.result() ? exceptionLogger : loggerFor(method, params, false, logUnit, logger);
+            LogPrinter slowLogger = exceptionLogger;
+            Class<?> returnType = method.getReturnType();
+            if (slowCallLog.result() && !returnType.equals(Void.TYPE)) {
+                if (cannotBecomeString(returnType))
+                    log.warn("Return type {} doesn't have a toString(), but is used in @SlowCallLog by {}", returnType, methodName);
+            } else {
+                slowLogger = loggerFor(method, params, false, logUnit, logger);
+            }
             Invoker invoker = makeInvoker(maxInvocationDurationInNs, slowLogger, exceptionLogger);
             WRAPPERS.put(method, invoker);
-            log.info("SlowCallLog for: {} with a max duration of {}ns", method.toGenericString(), maxInvocationDurationInNs);
+            log.info("SlowCallLog for: {} with a max duration of {}ns", methodName, maxInvocationDurationInNs);
         } catch (RuntimeException ex) {
             return ex.getMessage() + " for " + method.toGenericString();
         }
         return null;
+    }
+
+    /**
+     * Check if a type cannot be converted to a meaningful string
+     *
+     * @param type class definition
+     * @return if {@link java.lang.String#valueOf(java.lang.Object)} will give a
+     *         nondescript result
+     */
+    private static boolean cannotBecomeString(Class<?> type) {
+        if (type.isPrimitive())
+            return false;
+        for (Method method : type.getDeclaredMethods()) {
+            if (method.getName().equals("toString") && method.getParameterCount() == 0)
+                return false;
+        }
+        return true;
     }
 
     /**
@@ -114,6 +150,15 @@ public class SlowCallLogInterceptor {
         return params;
     }
 
+    /**
+     * Construct an invoker that logs if duration is too long
+     *
+     * @param thresholdInNs how many nanoseconds to allow call to take
+     * @param logger        how to log is duration is exceeded, and call
+     *                      succeeded
+     * @param exception     how to log is duration is exceeded, and call failed
+     * @return an invoker
+     */
     private static Invoker makeInvoker(long thresholdInNs, LogPrinter logger, LogPrinter exception) {
         return ic -> {
             long before = System.nanoTime();
@@ -159,34 +204,47 @@ public class SlowCallLogInterceptor {
         return cause.toString();
     }
 
-    private static LogPrinter loggerFor(Method method, int[] parameters, boolean withResult, NanoUnit timingUnit, BiConsumer<String, Object[]> logger) {
+    /**
+     * Create a logger that given duration in ns, parameters and result produces
+     * something readable
+     *
+     * @param method        the method for fully qualified name
+     * @param parameterList the parameter list, to include in the call
+     *                      description
+     * @param withResult    if the result should be included too
+     * @param timingUnit    whe wanted timing unit in the log line
+     * @param logger        the logger methos to use for logging from
+     *                      {@link #loggerForLevel(dk.dbc.commons.slowcalllog.SlowCallLog)}
+     * @return a log-printer
+     */
+    private static LogPrinter loggerFor(Method method, int[] parameterList, boolean withResult, NanoUnit timingUnit, BiConsumer<String, Object[]> logger) {
         String pattern = new StringBuilder()
                 .append(method.getDeclaringClass().getCanonicalName()) //class
                 .append(".")
                 .append(method.getName()) // method
                 .append("(")
-                .append(IntStream.of(parameters) // call args
+                .append(IntStream.of(parameterList) // call args
                         .mapToObj(i -> "[{}]")
                         .collect(Collectors.joining(", ")))
                 .append(") ")
-                .append(withResult ? " = [{}] " : "") // optional result
+                .append(withResult ? "= [{}] " : "") // optional result
                 .append("({}") //duration
                 .append(timingUnit.unitText())
                 .append(')')
                 .toString();
         long timeScaler = timingUnit.nanoSeconds();
+
         return (time, params, result) -> {
-            ParamToStringMapper parammeters = new ParamToStringMapper(params);
-            Stream.Builder<Object> builder = Stream.builder();
-            IntStream.of(parameters)
-                    .mapToObj(parammeters::asStringValue)
-                    .forEach(builder::add);
+            ArrayList<Object> values = new ArrayList<>(parameterList.length + 2);
+            for (int parameterPos : parameterList) {
+                values.add(asStringValue(params[parameterPos]));
+            }
             if (withResult)
-                builder.add(result);
-            builder.add(( time + timeScaler / 2 ) / timeScaler);
+                values.add(result);
+            values.add(( time + timeScaler / 2 ) / timeScaler);
             String oldValue = MDC.get(MDC_DURATION);
             MDC.put(MDC_DURATION, String.valueOf(( (double) time ) / 1_000_000.0)); // ms
-            logger.accept(pattern, builder.build().toArray());
+            logger.accept(pattern, values.toArray());
             if (oldValue != null)
                 MDC.put(MDC_DURATION, oldValue);
             else
@@ -194,8 +252,27 @@ public class SlowCallLogInterceptor {
         };
     }
 
-    private static BiConsumer<String, Object[]> loggerForLevel(SlowCallLog slowCallLog) {
-        Level logLevel = slowCallLog.level();
+    /**
+     * Produce a string value of an object
+     * <p>
+     * Ensure that arrays are handled correctly
+     *
+     * @param param object that should be logged
+     * @return string representation
+     */
+    private static String asStringValue(Object param) {
+        if (param != null && param.getClass().isArray())
+            return Arrays.toString((Object[]) param);
+        return String.valueOf(param);
+    }
+
+    /**
+     * Get the log-method that produces lines of the expected loglevel
+     *
+     * @param slowCallLog definition
+     * @return log method
+     */
+    private static BiConsumer<String, Object[]> loggerForLevel(Level logLevel) {
         switch (logLevel) {
             case TRACE:
                 return SlowCallLog.log::trace;
@@ -232,7 +309,7 @@ public class SlowCallLogInterceptor {
      * Parse a duration string
      *
      * @param duration string with content of the type: {number} {unit}
-     * @return number of nano seconds
+     * @return number of nanoseconds
      */
     static long durationInNs(String duration) {
         try {
@@ -244,22 +321,6 @@ public class SlowCallLogInterceptor {
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException("Don't know duration: " + duration);
 
-        }
-    }
-
-    private static class ParamToStringMapper {
-
-        private final Object[] params;
-
-        ParamToStringMapper(Object[] params) {
-            this.params = params;
-        }
-
-        String asStringValue(int index) {
-            Object param = params[index];
-            if (param != null && param.getClass().isArray())
-                return Arrays.toString((Object[]) param);
-            return String.valueOf(param);
         }
     }
 }
