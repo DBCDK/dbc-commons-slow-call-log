@@ -96,7 +96,8 @@ public @interface SlowCallLog {
     int[] parameters() default {-1};
 
     /**
-     * Should log return value, if not void, too?
+     * Set to true, if return value should be logged. This settings is ignored
+     * if the method has void as return type
      *
      * @return true
      */

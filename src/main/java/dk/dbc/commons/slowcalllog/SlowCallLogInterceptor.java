@@ -155,9 +155,9 @@ public class SlowCallLogInterceptor {
      * Construct an invoker that logs if duration is too long
      *
      * @param thresholdInNs how many nanoseconds to allow call to take
-     * @param logger        how to log is duration is exceeded, and call
+     * @param logger        how to log if duration is exceeded, and call
      *                      succeeded
-     * @param exception     how to log is duration is exceeded, and call failed
+     * @param exception     how to log if duration is exceeded, and call failed
      * @return an invoker
      */
     private static Invoker makeInvoker(long thresholdInNs, LogPrinter logger, LogPrinter exception) {
@@ -268,7 +268,7 @@ public class SlowCallLogInterceptor {
     }
 
     /**
-     * Get the log-method that produces lines of the expected loglevel
+     * Get the log-method that produces lines of the expected log-level
      *
      * @param slowCallLog definition
      * @return log method

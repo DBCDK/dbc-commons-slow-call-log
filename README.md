@@ -22,12 +22,12 @@ It is based around this structure:
 @Stateless // or any other bean annotation
 public MyBackendClass {
 
-    @SlowCallLog(env="BACKEND_TIMING", factor=.6, result=false, level="ERROR")
+    @SlowCallLog(env="BACKEND_TIMING", scale=.6, result=false, level="ERROR")
     List<Row> getDatabaseEntriesFor(String key, Timestamp whenish) {
         ...
     }
 
-    @SlowCallLog(env="BACKEND_TIMING", factor=.4, params={1})
+    @SlowCallLog(env="BACKEND_TIMING", scale=.4, params={1})
     Resp processEntries(List<Row> rows, String trackingId) {
         ...
     }
