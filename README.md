@@ -58,8 +58,10 @@ And for `processEntries()` calls that take more that 8ms it will log trackingId 
 
 ## Log output (MDC)
 
-This is built upon the `slf4j` log framework. And the logger used is called `dk.dbc.commons.slowcalllog.SlowCallLog`.
-If the log level, declared in the annotation, is __not__ enabled initialization will fail.
+This is built upon the `slf4j` log framework.
+
+The logger used is called `dk.dbc.commons.slowcalllog.SlowCallLog`. If the log level, declared in the annotation, is __not__ enabled initialization will fail.
+
 Several values are set in the Mapped Diagnostic Contexts (MDC)
 
  * `call_duration_ms` records duration in milliseconds.
@@ -68,4 +70,4 @@ Several values are set in the Mapped Diagnostic Contexts (MDC)
 
 These are useful for filtering the calls you're interested in.
 
-NB. Do notice that if you set the `trackingId` in the MDC in your call, it will __not__ be included in the log line for the call.
+NB. Do notice that if you set the `trackingId` pr other values in the MDC in your call, it will __not__ be included in the log line for the call.
