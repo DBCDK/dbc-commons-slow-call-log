@@ -56,4 +56,18 @@ The calls are across bean-boundaries, so interceptors are in play. The environme
 This will log all the arguments and exceptions but not return values for the calls to `getDatabaseEntriesFor()`, that take more than 12ms, as an error.
 And for `processEntries()` calls that take more that 8ms it will log trackingId and return value.
 
-This is built upon the `slf4j` log framework. And the logger used is called `SlowCallLog`. An mdc value called: `call_duration_ms` records duration in milliseconds.
+## Log output (MDC)
+
+This is built upon the `slf4j` log framework.
+
+The logger used is called `dk.dbc.commons.slowcalllog.SlowCallLog`. If the log level, declared in the annotation, is __not__ enabled initialization will fail.
+
+Several values are set in the Mapped Diagnostic Contexts (MDC)
+
+ * `call_duration_ms` records duration in milliseconds.
+ * `class` the fully qualified class name
+ * `method` the method name
+
+These are useful for filtering the calls you're interested in.
+
+NB. Do notice that if you set the `trackingId` or other values in the MDC in your call, it will __not__ be included in the log line for the call.

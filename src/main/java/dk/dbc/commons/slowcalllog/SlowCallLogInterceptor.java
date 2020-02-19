@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -44,18 +45,21 @@ import org.slf4j.event.Level;
  *
  * @author Morten Bøgeskov (mb@dbc.dk)
  */
-@SlowCallLog
+@SlowCallLogInterceptorBinding
 @Interceptor
-@Priority(Interceptor.Priority.LIBRARY_BEFORE + 1)
+@Priority(Interceptor.Priority.LIBRARY_BEFORE + 10)
 @SuppressWarnings("PMD.UnusedPrivateMethod")
-public class SlowCallLogInterceptor {
+class SlowCallLogInterceptor {
 
     private static final Logger log = LoggerFactory.getLogger(SlowCallLogInterceptor.class);
 
     private static final HashMap<Method, Invoker> WRAPPERS = new HashMap<>();
     // Do noting "wrapper"
     private static final Invoker DEFAULT_WRAPPER = InvocationContext::proceed;
+
     private static final String MDC_DURATION = "call_duration_ms";
+    private static final String MDC_CLASS = "class";
+    private static final String MDC_METHOD = "method";
 
     @FunctionalInterface
     private interface Invoker {
@@ -219,10 +223,12 @@ public class SlowCallLogInterceptor {
      * @return a log-printer
      */
     private static LogPrinter loggerFor(Method method, int[] parameterList, boolean withResult, NanoUnit timingUnit, BiConsumer<String, Object[]> logger) {
+        String className = method.getDeclaringClass().getCanonicalName();
+        String methodName = method.getName();
         String pattern = new StringBuilder()
-                .append(method.getDeclaringClass().getCanonicalName()) //class
+                .append(className) //class
                 .append(".")
-                .append(method.getName()) // method
+                .append(methodName) // method
                 .append("(")
                 .append(IntStream.of(parameterList) // call args
                         .mapToObj(i -> "[{}]")
@@ -236,6 +242,7 @@ public class SlowCallLogInterceptor {
         long timeScaler = timingUnit.nanoSeconds();
 
         return (time, params, result) -> {
+
             ArrayList<Object> values = new ArrayList<>(parameterList.length + 2);
             for (int parameterPos : parameterList) {
                 values.add(asStringValue(params[parameterPos]));
@@ -243,13 +250,15 @@ public class SlowCallLogInterceptor {
             if (withResult)
                 values.add(result);
             values.add(( time + timeScaler / 2 ) / timeScaler);
-            String oldValue = MDC.get(MDC_DURATION);
+            Map<String, String> oldMdc = MDC.getCopyOfContextMap();
             MDC.put(MDC_DURATION, String.valueOf(( (double) time ) / 1_000_000.0)); // ms
+            MDC.put(MDC_CLASS, className);
+            MDC.put(MDC_METHOD, methodName);
             logger.accept(pattern, values.toArray());
-            if (oldValue != null)
-                MDC.put(MDC_DURATION, oldValue);
+            if (oldMdc == null)
+                MDC.clear();
             else
-                MDC.remove(MDC_DURATION);
+                MDC.setContextMap(oldMdc);
         };
     }
 
@@ -276,18 +285,27 @@ public class SlowCallLogInterceptor {
     private static BiConsumer<String, Object[]> loggerForLevel(Level logLevel) {
         switch (logLevel) {
             case TRACE:
-                return SlowCallLog.log::trace;
+                if (SlowCallLog.log.isTraceEnabled())
+                    return SlowCallLog.log::trace;
+                break;
             case DEBUG:
-                return SlowCallLog.log::debug;
+                if (SlowCallLog.log.isDebugEnabled())
+                    return SlowCallLog.log::debug;
+                break;
             case INFO:
-                return SlowCallLog.log::info;
+                if (SlowCallLog.log.isInfoEnabled())
+                    return SlowCallLog.log::info;
+                break;
             case WARN:
-                return SlowCallLog.log::warn;
+                if (SlowCallLog.log.isWarnEnabled())
+                    return SlowCallLog.log::warn;
+                break;
             case ERROR:
                 return SlowCallLog.log::error;
             default:
                 throw new IllegalArgumentException("Invalid log level: " + logLevel);
         }
+        throw new IllegalStateException("Loglevel " + logLevel + " is not enabled for SlowCallLog");
     }
 
     /**

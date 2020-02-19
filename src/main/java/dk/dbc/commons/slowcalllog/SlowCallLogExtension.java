@@ -23,10 +23,11 @@ import java.util.List;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.AfterBeanDiscovery;
 import javax.enterprise.inject.spi.AnnotatedMethod;
-import javax.enterprise.inject.spi.AnnotatedType;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.ProcessAnnotatedType;
 import javax.enterprise.inject.spi.WithAnnotations;
+import javax.enterprise.inject.spi.configurator.AnnotatedMethodConfigurator;
+import javax.enterprise.util.AnnotationLiteral;
 
 /**
  * This processes all {@link SlowCallLog} annotated methods, and enables an
@@ -39,6 +40,9 @@ import javax.enterprise.inject.spi.WithAnnotations;
 @SuppressWarnings("PMD.UnusedPrivateMethod")
 public class SlowCallLogExtension implements Extension {
 
+    private static final AnnotationLiteral<SlowCallLogInterceptorBinding> SCL_INTERCEPTOR_BINDING = new AnnotationLiteral<SlowCallLogInterceptorBinding>() {
+    };
+
     private final List<String> SETUP_ERRORS = new ArrayList<>();
 
     /**
@@ -49,15 +53,13 @@ public class SlowCallLogExtension implements Extension {
      *                             annotation
      */
     private <T> void processAnnotatedType(@Observes @WithAnnotations(SlowCallLog.class) ProcessAnnotatedType<T> processAnnotatedType) {
-        AnnotatedType<T> annotatedType = processAnnotatedType.getAnnotatedType();
 
-        if (annotatedType.getJavaClass().equals(SlowCallLogInterceptor.class))
-            return;
-        if (annotatedType.isAnnotationPresent(SlowCallLog.class))
-            SETUP_ERRORS.add("@SlowCallLog is not a valid class annotation on: " + annotatedType.getJavaClass().getName());
-
-        annotatedType.getMethods().stream()
-                .filter(callable -> callable.isAnnotationPresent(SlowCallLog.class))
+        processAnnotatedType.configureAnnotatedType()
+                .methods()
+                .stream()
+                .filter(m -> m.getAnnotated().isAnnotationPresent(SlowCallLog.class))
+                .map(m -> m.add(SCL_INTERCEPTOR_BINDING))
+                .map(AnnotatedMethodConfigurator::getAnnotated)
                 .map(AnnotatedMethod::getJavaMember)
                 .map(SlowCallLogInterceptor::wrapMethod)
                 .filter(e -> e != null)

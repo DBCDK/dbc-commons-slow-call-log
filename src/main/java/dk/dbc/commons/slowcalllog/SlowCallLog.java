@@ -40,7 +40,7 @@ import org.slf4j.event.Level;
 @Inherited
 @Documented
 @InterceptorBinding
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SlowCallLog {
 
