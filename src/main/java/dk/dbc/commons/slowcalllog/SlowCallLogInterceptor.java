@@ -45,11 +45,11 @@ import org.slf4j.event.Level;
  *
  * @author Morten Bøgeskov (mb@dbc.dk)
  */
-@SlowCallLog
+@SlowCallLogInterceptorBinding
 @Interceptor
-@Priority(Interceptor.Priority.LIBRARY_BEFORE + 1)
+@Priority(Interceptor.Priority.LIBRARY_BEFORE + 10)
 @SuppressWarnings("PMD.UnusedPrivateMethod")
-public class SlowCallLogInterceptor {
+class SlowCallLogInterceptor {
 
     private static final Logger log = LoggerFactory.getLogger(SlowCallLogInterceptor.class);
 

@@ -28,7 +28,7 @@ Using `curl` to test it
  * `curl -D /dev/stdout 'http://localhost:8080/api/ping?s=25&client'` - sleep and produce an exception (code 400)
  * `curl -D /dev/stdout 'http://localhost:8080/api/ping?s=25&server'` - sleep and produce an exception (code 500)
 
-You will hit [this class](src/main/java/dk/dbc/example/Ping.java), and givenj it's annotation toy should expec the output to be a lot like this (this is pretty printed using `jq`):
+You will hit [this class](src/main/java/dk/dbc/example/Ping.java), and given it's annotation you should expect the output to be a lot like this (this is pretty printed using `jq`):
 
 ```
 {
