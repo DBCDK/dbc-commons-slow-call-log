@@ -33,14 +33,16 @@ The output should be of this sort (this is pretty printed using `jq`):
 {
   "timestamp": "...",
   "version": "1",
-  "message": "dk.dbc.example.Ping.ping([25]) = [Status{ok=true, message=pong!}] (25766µs)",
+  "message": "dk.dbc.example.Ping.ping([25]) = [Status{ok=true, message=pong!}] (25873µs)",
   "logger": "dk.dbc.commons.slowcalllog.SlowCallLog",
   "thread": "http-thread-pool::http-listener(2)",
   "level": "ERROR",
   "level_value": 40000,
   "HOSTNAME": "...",
   "mdc": {
-    "call_duration_ms": "25.76586"
+    "call_duration_ms": "25.873413",
+    "method": "ping",
+    "class": "dk.dbc.example.Ping"
   }
 }
 ```
