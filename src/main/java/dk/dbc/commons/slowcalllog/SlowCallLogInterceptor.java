@@ -285,18 +285,27 @@ public class SlowCallLogInterceptor {
     private static BiConsumer<String, Object[]> loggerForLevel(Level logLevel) {
         switch (logLevel) {
             case TRACE:
-                return SlowCallLog.log::trace;
+                if (SlowCallLog.log.isTraceEnabled())
+                    return SlowCallLog.log::trace;
+                break;
             case DEBUG:
-                return SlowCallLog.log::debug;
+                if (SlowCallLog.log.isDebugEnabled())
+                    return SlowCallLog.log::debug;
+                break;
             case INFO:
-                return SlowCallLog.log::info;
+                if (SlowCallLog.log.isInfoEnabled())
+                    return SlowCallLog.log::info;
+                break;
             case WARN:
-                return SlowCallLog.log::warn;
+                if (SlowCallLog.log.isWarnEnabled())
+                    return SlowCallLog.log::warn;
+                break;
             case ERROR:
                 return SlowCallLog.log::error;
             default:
                 throw new IllegalArgumentException("Invalid log level: " + logLevel);
         }
+        throw new IllegalStateException("Loglevel " + logLevel + " is not enabled for SlowCallLog");
     }
 
     /**
