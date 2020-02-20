@@ -77,7 +77,6 @@
                             <outputDirectory>${project.build.directory}</outputDirectory>
                             <stripClassifier>true</stripClassifier>
                             <stripVersion>true</stripVersion>
-                            
                         </configuration>
                     </execution>
                 </executions>
