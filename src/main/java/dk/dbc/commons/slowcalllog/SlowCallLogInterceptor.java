@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -98,6 +99,10 @@ class SlowCallLogInterceptor {
                     .filter(SlowCallLogInterceptor::cannotBecomeString)
                     .forEach(type -> log.warn("Type {} doesn't have a toString(), but is used in @SlowCallLog by {}", type, methodName));
             long maxInvocationDurationInNs = logDuration(slowCallLog);
+            if (maxInvocationDurationInNs < 0) {
+                log.info("SlowCallLog for: {} is turned off", methodName, maxInvocationDurationInNs);
+                return null;
+            }
             BiConsumer<String, Object[]> logger = loggerForLevel(slowCallLog.level());
             NanoUnit logUnit = NanoUnit.of(slowCallLog.unit());
             LogPrinter exceptionLogger = loggerFor(method, params, true, logUnit, logger);
@@ -321,6 +326,10 @@ class SlowCallLogInterceptor {
         String env = System.getenv(variableName);
         if (env == null)
             throw new IllegalArgumentException("Unknown variable: $" + variableName + " for logging threshold");
+        if ("off".equalsIgnoreCase(env))
+            return Long.MIN_VALUE;
+        if ("always".equalsIgnoreCase(env))
+            return 0;
         return (long) ( slowCallLog.scale() * (double) durationInNs(env) );
     }
 

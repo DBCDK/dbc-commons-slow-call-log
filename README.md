@@ -56,6 +56,11 @@ The calls are across bean-boundaries, so interceptors are in play. The environme
 This will log all the arguments and exceptions but not return values for the calls to `getDatabaseEntriesFor()`, that take more than 12ms, as an error.
 And for `processEntries()` calls that take more that 8ms it will log trackingId and return value.
 
+The duration from the environment variable has 2 special vales (case insensitive):
+
+ * `off` - Don't log, no matter how long it takes
+ * `always` - Always log
+
 ## Log output (MDC)
 
 This is built upon the `slf4j` log framework.
