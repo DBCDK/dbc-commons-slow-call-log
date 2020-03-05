@@ -9,7 +9,6 @@ import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.ws.rs.InternalServerErrorException;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import org.slf4j.event.Level;
@@ -26,8 +25,7 @@ public class Ping {
             parameters = {1}, // Not UriInfo
             result = true,
             level = Level.ERROR,
-            unit = "us"
-    )
+            unit = "us")
     public Status ping(@Context UriInfo UriInfo,
                        @QueryParam("s") int s) {
         log.info("Ping? s={}", s);
@@ -47,33 +45,5 @@ public class Ping {
             throw Status.fail("no-pong?", Response.Status.BAD_REQUEST);
 
         return Status.ok("pong!");
-    }
-
-    public static class Status {
-
-        public boolean ok;
-        public String message;
-
-        public Status() {
-        }
-
-        private Status(boolean ok, String message) {
-            this.ok = ok;
-            this.message = message;
-        }
-
-        static Status ok(String message) {
-            return new Status(true, message);
-        }
-
-        static WebApplicationException fail(String message, Response.Status status) {
-            Response resp = Response.status(status).entity(new Status(false, message)).build();
-            return new WebApplicationException(message, resp);
-        }
-
-        @Override
-        public String toString() {
-            return "Status{" + "ok=" + ok + ", message=" + message + '}';
-        }
     }
 }
