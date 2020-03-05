@@ -20,7 +20,7 @@ A fully running payara-micro demonstration can be found in the [example](example
 
 It is based around this structure:
 
-```
+```java
 @Stateless // or any other bean annotation
 public MyBackendClass {
 
@@ -39,7 +39,7 @@ public MyBackendClass {
 
 Called from:
 
-```
+```java
     @Inject
     MyBackendClass backend;
 ...
@@ -85,14 +85,14 @@ NB. Do notice that if you set the `trackingId` or other values in the MDC in you
 
 It is based around the syntax of:
 
-```
+```java
     @GET/POST/PUT
     ...
     public Object method(@Context StopWatch stopwatch, ...) {
 
 ```
 or
-```
+```java
     @Context
     StopWatch stopWatch;
 ```
@@ -105,7 +105,7 @@ An extra timer wil always be present: `total_ms` which has no corrosponding `tot
 
 If you want to time multiple statements combined in one timer use the `AutoClosable` `Clock` instance:
 
-```
+```java
     try(Clock c = stopWatch.time("my_scope")) {
         ...
     }
@@ -117,7 +117,7 @@ This will count the time spent from the `.time()` call to the `Clock.close()` wi
 
 A simple supplier can be timed like this:
 
-```
+```java
     Object x = stopWatch.timed("my_method", () -> doSomething());
 ```
 
@@ -125,7 +125,7 @@ A simple supplier can be timed like this:
 
 If a method throws exceptions, the `java.lang.function.Supplier` interface cannot be used. Instead you can do:
 
-```
+```java
     Object x = stopWatch.timedWithExceptions("my_method", () -> doSomething())
         .threw(IOException.class)
         .value()
@@ -140,4 +140,32 @@ Since the `Jersey` `@Context` is run before any `Interceptors`, tools like `dk.d
 *  `.importMDC()` simply includes the current `MDC` map when logging the `TIMINGS` line
 *  `.setMDC("", "")` allows for setting specific `MDC` values for logging
 
-Usually it'll be enough to do a `stopWatch.importMDC()` whenever the trackingId has been set up. Remember the timings will overwrite values copies or set
+Usually it'll be enough to do a `stopWatch.importMDC()` whenever the trackingId has been set up. Remember the timings will overwrite values that are copied or set.
+
+### Output
+
+The logged output (ready for ELK) from the `curl http://localhost:8080/api/timings` call to [Timings.java](example/src/main/java/dk/dbc/example/Timings.java)
+
+```json
+{
+  "timestamp": "...",
+  "version": "1",
+  "message": "TIMING",
+  "logger": "dk.dbc.commons.timings.TimingContext",
+  "thread": "...",
+  "level": "INFO",
+  "level_value": 20000,
+  "HOSTNAME": "...",
+  "mdc": {
+    "make_tracking_id_count": "1",
+    "body_ms": "1.817336",
+    "body_count": "1",
+    "parse_url_count": "1",
+    "parse_url_ms": "0.04561",
+    "make_tracking_id_ms": "0.052685",
+    "trackingId": "..."
+  }
+}
+```
+
+Unfortunately the current `MDC` implementation from `slf4j` only supports `String` type, so logstash needs to learn how to map the values to float/int.
