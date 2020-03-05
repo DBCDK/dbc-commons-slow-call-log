@@ -18,6 +18,7 @@
  */
 package dk.dbc.commons.stopwatch;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
@@ -59,7 +60,7 @@ public class StopWatch {
          *
          * @return the result value
          */
-        public T value();
+        T value();
 
         /**
          * If the supplier threw an exception of this type (or inherited from
@@ -70,7 +71,7 @@ public class StopWatch {
          * @return self for chaining
          * @throws E exception
          */
-        public <E extends Exception> Value<T> threw(Class<E> clazz) throws E;
+        <E extends Exception> Value<T> threw(Class<E> clazz) throws E;
     }
 
     private static class TimerEntry {
@@ -119,6 +120,7 @@ public class StopWatch {
     /**
      * Log the registered times
      */
+    @SuppressFBWarnings(value = "IS2_INCONSISTENT_SYNC", justification = "This is not called in a threaded context - only upon context cleanup")
     void dispose() {
         MDC.setContextMap(mdc);
         timers.forEach((name, entry) -> {
@@ -171,7 +173,7 @@ public class StopWatch {
         } catch (RuntimeException ex) {
             throw ex;
         } catch (Exception ex) {
-            return new ValueWithCheckedException<>(ex);
+            return new ValueWithCheckedExceptionThrown<>(ex);
         }
     }
 
@@ -194,11 +196,11 @@ public class StopWatch {
         }
     }
 
-    private static class ValueWithCheckedException<T> implements Value<T> {
+    private static class ValueWithCheckedExceptionThrown<T> implements Value<T> {
 
         private final Exception ex;
 
-        private ValueWithCheckedException(Exception ex) {
+        private ValueWithCheckedExceptionThrown(Exception ex) {
             this.ex = ex;
         }
 

@@ -26,5 +26,5 @@ package dk.dbc.commons.stopwatch;
 public interface Clock extends AutoCloseable {
 
     @Override
-    public void close();
+    void close();
 }
