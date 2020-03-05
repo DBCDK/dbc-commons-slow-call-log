@@ -25,7 +25,7 @@ import org.glassfish.jersey.process.internal.RequestScoped;
 
 /**
  * Jersey feature (auto enabled by {@link StopWatchAutoDiscover}) that
- * provides @{@link Context} @{link StopWatch}
+ * provides @Context @{link StopWatch}
  *
  * @author Morten Bøgeskov (mb@dbc.dk)
  */
