@@ -24,8 +24,8 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.process.internal.RequestScoped;
 
 /**
- * Jersey feature (auto enabled by {@link TimingContextAutoDiscover}) that
- * provides @{@link Context} @{link TimingContext}
+ * Jersey feature (auto enabled by {@link StopWatchAutoDiscover}) that
+ * provides @{@link Context} @{link StopWatch}
  *
  * @author Morten Bøgeskov (mb@dbc.dk)
  */
