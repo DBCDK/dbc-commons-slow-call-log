@@ -170,4 +170,31 @@ The logged output (ready for ELK) from the `curl http://localhost:8080/api/timin
 }
 ```
 
-Unfortunately the current `MDC` implementation from `slf4j` only supports `String` type, so logstash needs to learn how to map the values to float/int.
+Unfortunately the current `MDC` implementation from `slf4j` only supports `String` type, so logstash needs to learn how to map the values to float/int:
+
+```
+filter {
+  json {
+    source => "message"
+  }
+  ruby {
+    code => "
+```
+```ruby
+      mdc = event.get('[mdc]')
+      if mdc != nil
+        mdc.each do |k, v|
+          if k.end_with?('_ms')
+            mdc[k] = v.to_f
+          elsif k.end_with?('_count')
+            mdc[k] = v.to_i
+          end
+        end
+        event.set('[mdc]', mdc)
+      end
+```
+```
+    "
+  }
+}
+```
