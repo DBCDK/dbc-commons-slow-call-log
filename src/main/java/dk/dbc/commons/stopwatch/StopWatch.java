@@ -22,6 +22,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
+import javax.annotation.CheckReturnValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -39,9 +40,25 @@ public class StopWatch {
      *
      * @param <T> the type of results supplied by this supplier
      */
-    public interface SupplierWithCheckedException<T> {
+    public interface SupplierWithCheckedExceptions<T> {
 
         T get() throws Exception;
+    }
+
+    /**
+     * A Code block that does not throw checked exceptions
+     */
+    public interface VoidBlock {
+
+        void perform();
+    }
+
+    /**
+     * A Code block that throws checked exceptions
+     */
+    public interface VoidBlockWithCheckedExceptions {
+
+        void perform() throws Exception;
     }
 
     /**
@@ -55,7 +72,7 @@ public class StopWatch {
          * Get the value
          * <p>
          * if an exception was thrown and not propagandated by
-         * {@link #threw(java.lang.Class)} it is wrapped in a
+         * {@link #checkFor(java.lang.Class)} it is wrapped in a
          * RuntimeException and thrown
          *
          * @return the result value
@@ -71,7 +88,8 @@ public class StopWatch {
          * @return self for chaining
          * @throws E exception
          */
-        <E extends Exception> Value<T> threw(Class<E> clazz) throws E;
+        @CheckReturnValue
+        <E extends Exception> Value<T> checkFor(Class<E> clazz) throws E;
     }
 
     private static class TimerEntry {
@@ -159,6 +177,18 @@ public class StopWatch {
     }
 
     /**
+     * Call a code segment and time it
+     *
+     * @param name  {@link MDC} name of timing information
+     * @param block code segment to time
+     */
+    public void timed(String name, VoidBlock block) {
+        try (Clock timer = time(name)) {
+            block.perform();
+        }
+    }
+
+    /**
      * Call a supplier and time it
      *
      * @param <T>      type of return value
@@ -167,9 +197,32 @@ public class StopWatch {
      * @return the result of {@link Supplier#get()} wrapped in a
      *         {@link Value}
      */
-    public <T> Value<T> timedWithExceptions(String name, SupplierWithCheckedException<T> supplier) {
+    @CheckReturnValue
+    public <T> Value<T> timedWithExceptions(String name, SupplierWithCheckedExceptions<T> supplier) {
         try (Clock timer = time(name)) {
             return new ValueWithValue<>(supplier.get());
+        } catch (RuntimeException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            return new ValueWithCheckedExceptionThrown<>(ex);
+        }
+    }
+
+    /**
+     * Call a code segment and time it
+     *
+     * Remember to check for exceptions
+     *
+     * @param name  {@link MDC} name of timing information
+     * @param block code segment to time
+     * @return the result of {@link Supplier#get()} wrapped in a
+     *         {@link Value}
+     */
+    @CheckReturnValue
+    public Value<Void> timedWithExceptions(String name, VoidBlockWithCheckedExceptions block) {
+        try (Clock timer = time(name)) {
+            block.perform();
+            return new ValueWithValue<>(null);
         } catch (RuntimeException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -191,7 +244,7 @@ public class StopWatch {
         }
 
         @Override
-        public <E extends Exception> Value<T> threw(Class<E> clazz) throws E {
+        public <E extends Exception> Value<T> checkFor(Class<E> clazz) throws E {
             return this;
         }
     }
@@ -210,7 +263,7 @@ public class StopWatch {
         }
 
         @Override
-        public <E extends Exception> Value<T> threw(Class<E> clazz) throws E {
+        public <E extends Exception> Value<T> checkFor(Class<E> clazz) throws E {
             if (clazz.isAssignableFrom(ex.getClass()))
                 throw (E) ex;
             return this;

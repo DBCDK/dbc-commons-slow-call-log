@@ -31,7 +31,7 @@ public class Timings {
             // Supplier with exception(s) based timing
             URL url = stopWatch.timedWithExceptions("parse_url",
                                                     () -> new URL("http://localhost/foo/bar.html"))
-                    .threw(MalformedURLException.class)
+                    .checkFor(MalformedURLException.class)
                     .value();
             System.out.println("url = " + url);
 

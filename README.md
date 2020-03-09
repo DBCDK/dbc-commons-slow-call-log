@@ -127,11 +127,13 @@ If a method throws exceptions, the `java.lang.function.Supplier` interface canno
 
 ```java
     Object x = stopWatch.timedWithExceptions("my_method", () -> doSomething())
-        .threw(IOException.class)
+        .checkfor(IOException.class)
         .value()
 ```
 
-This method allows for `doSomething()` to throw checked exceptions. The `.threw(IOException.class)` re-throws the exception from the method, if it threw one of io-exception type. `.value()` takes the value, or warns and throws a `RuntimeException` wrapping the exception thrown by the method. Any `RuntimeException` thrown by the method is just throw immediately.
+This method allows for `doSomething()` to throw checked exceptions. The `.checkfor(IOException.class)` re-throws the exception from the method, if it threw one of io-exception type. `.value()` takes the value, or warns and throws a `RuntimeException` wrapping the exception thrown by the method. Any `RuntimeException` thrown by the method is just throw immediately.
+
+It also works for `void` methods. Then a `StopWatch.Value<Void>` is returned. Remember to chech for exceptions in that case. It is annotated with `@CheckReturn` so your IDE should help you there.
 
 ### Additional MDC values
 
