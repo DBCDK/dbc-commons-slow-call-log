@@ -21,7 +21,7 @@ pipeline {
                         rm -rf \$WORKSPACE/.repo
                         mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo dependency:resolve dependency:resolve-plugins >/dev/null 2>&1 || true
                         mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo clean
-                        mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo --fail-at-end org.jacoco:jacoco-maven-plugin:prepare-agent install -Dsurefire.useFile=false
+                        mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo --fail-at-end install -Dsurefire.useFile=false
                     """
 
                     // We want code-coverage and pmd/spotbugs even if unittests fails
@@ -43,13 +43,6 @@ pipeline {
 
                     def spotbugs = scanForIssues tool: [$class: 'SpotBugs', pattern: '**/target/spotbugsXml.xml']
                     publishIssues issues:[spotbugs], failedTotalAll: 1
-
-                    step([$class: 'JacocoPublisher',
-                          execPattern: 'target/*.exec,**/target/*.exec',
-                          classPattern: 'target/classes,**/target/classes',
-                          sourcePattern: 'src/main/java,**/src/main/java',
-                          exclusionPattern: 'src/test*,**/src/test*,**/*?Request.*,**/*?Response.*,**/*?Request$*,**/*?Response$*,**/*?DTO.*,**/*?DTO$*'
-                    ])
 
                     warnings consoleParsers: [
                          [parserName: "Java Compiler (javac)"],
