@@ -20,20 +20,20 @@ package dk.dbc.commons.slowcalllog;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.AfterBeanDiscovery;
-import javax.enterprise.inject.spi.AnnotatedMethod;
-import javax.enterprise.inject.spi.Extension;
-import javax.enterprise.inject.spi.ProcessAnnotatedType;
-import javax.enterprise.inject.spi.WithAnnotations;
-import javax.enterprise.inject.spi.configurator.AnnotatedMethodConfigurator;
-import javax.enterprise.util.AnnotationLiteral;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.spi.AfterBeanDiscovery;
+import jakarta.enterprise.inject.spi.AnnotatedMethod;
+import jakarta.enterprise.inject.spi.Extension;
+import jakarta.enterprise.inject.spi.ProcessAnnotatedType;
+import jakarta.enterprise.inject.spi.WithAnnotations;
+import jakarta.enterprise.inject.spi.configurator.AnnotatedMethodConfigurator;
+import jakarta.enterprise.util.AnnotationLiteral;
 
 /**
  * This processes all {@link SlowCallLog} annotated methods, and enables an
  * interceptor for them.
  * <p>
- * This is triggered by: META-INF/services/javax.enterprise.inject.spi.Extension
+ * This is triggered by: META-INF/services/jakarta.enterprise.inject.spi.Extension
  *
  * @author Morten Bøgeskov (mb@dbc.dk)
  */

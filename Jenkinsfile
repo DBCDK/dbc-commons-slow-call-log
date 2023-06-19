@@ -1,7 +1,8 @@
 pipeline {
-    agent { label "devel10" }
+    agent { label "devel11" }
     tools {
         maven "Maven 3"
+        jdk "jdk11"
     }
     environment {
         MAVEN_OPTS = "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"

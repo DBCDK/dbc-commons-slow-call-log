@@ -18,7 +18,7 @@
  */
 package dk.dbc.commons.stopwatch;
 
-import javax.ws.rs.core.FeatureContext;
+import jakarta.ws.rs.core.FeatureContext;
 import org.glassfish.jersey.internal.spi.ForcedAutoDiscoverable;
 
 /**
